@@ -4,41 +4,111 @@ import pandas as pd
 import openpyxl
 from openpyxl.styles import PatternFill, Font, Alignment, numbers
 from openpyxl.utils import get_column_letter
+import os # Importar os para abrir archivos
 
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Comparador de Facturas")
         self.geometry("700x500")
-        self.configure(bg="#1c2c47")
+        self.configure(bg="#1c2c47") # Fondo oscuro para la ventana principal
+
         self.file1 = None
         self.file2 = None
         self.archivo_procesado = None
+        
+        # --- Configuración de Estilos ttk ---
+        self.style = ttk.Style(self) # Inicializa el estilo ttk
+        
+        # Configurar el tema base de ttk (opcional, pero 'clam' o 'alt' suelen ser mejores para personalizar)
+        self.style.theme_use('clam') 
+
+        # Estilo para el título
+        self.style.configure('TLabel', background="#1c2c47", foreground="#f5f6fa", font=('Segoe UI', 10))
+        self.style.configure('Title.TLabel', font=('Segoe UI', 16, 'bold'))
+
+        # Estilos para los botones
+        # Botones "Subir archivo" (azul/gris-azulado)
+        self.style.configure('Upload.TButton',
+                             background='#4A90E2',  # Un azul más vibrante
+                             foreground='white',
+                             font=('Segoe UI', 10, 'bold'),
+                             padding=[15, 10], # Mayor padding para botones más grandes
+                             borderwidth=0,     # Sin borde visible por defecto
+                             relief="flat"      # Estilo plano
+                            )
+        self.style.map('Upload.TButton',
+                       background=[('active', '#357ABD'), # Azul oscuro al pasar el ratón
+                                   ('pressed', '#286090')], # Azul aún más oscuro al hacer clic
+                       foreground=[('active', 'white'), 
+                                   ('pressed', 'white')]
+                      )
+
+        # Botón "Comparar" (Amarillo/Naranja)
+        self.style.configure('Compare.TButton',
+                             background='#F5A623', # Naranja brillante
+                             foreground='white',
+                             font=('Segoe UI', 10, 'bold'),
+                             padding=[15, 10],
+                             borderwidth=0,
+                             relief="flat"
+                            )
+        self.style.map('Compare.TButton',
+                       background=[('active', '#E09117'), 
+                                   ('pressed', '#C97D00')],
+                       foreground=[('active', 'white'), 
+                                   ('pressed', 'white')]
+                      )
+
+        # Botón "Abrir resultado" (Verde)
+        self.style.configure('Open.TButton',
+                             background='#50E3C2', # Verde aguamarina
+                             foreground='#1c2c47', # Texto oscuro para contraste
+                             font=('Segoe UI', 10, 'bold'),
+                             padding=[15, 10],
+                             borderwidth=0,
+                             relief="flat"
+                            )
+        self.style.map('Open.TButton',
+                       background=[('active', '#36B69D'), 
+                                   ('pressed', '#2A8E77')],
+                       foreground=[('active', '#1c2c47'), 
+                                   ('pressed', '#1c2c47')]
+                      )
+
         self.create_content()
 
     def create_content(self):
-        lbl_titulo = ttk.Label(self, text="Comparador de Facturas SAT vs Odoo", background="#1c2c47", foreground="#f5f6fa", font=('Segoe UI', 16, 'bold'))
+        # Usamos el estilo 'Title.TLabel' aquí
+        lbl_titulo = ttk.Label(self, text="Comparador de Facturas SAT vs Odoo", style='Title.TLabel')
         lbl_titulo.pack(pady=(20, 20))
 
-        btn_frame = tk.Frame(self, bg="#1c2c47")
+        # Es mejor usar ttk.Frame para que se apliquen los estilos de ttk si se usan temas
+        btn_frame = ttk.Frame(self, style='TFrame') # Puedes definir un estilo para TFrame si quieres bg
         btn_frame.pack(pady=10)
 
-        self.lbl_file1 = ttk.Label(self, text="Archivo 1 (Odoo): Ninguno", background="#1c2c47", foreground="#f5f6fa", font=('Segoe UI', 10))
+        # Configuramos el background del frame de botones manualmente si ttk.Frame no hereda bien el bg
+        # O si prefieres un color diferente para el frame de botones
+        btn_frame.configure(style='Custom.TFrame') 
+        self.style.configure('Custom.TFrame', background="#1c2c47")
+
+        self.lbl_file1 = ttk.Label(self, text="Archivo 1 (Odoo): Ninguno", style='TLabel')
         self.lbl_file1.pack(pady=(5, 5))
-        self.lbl_file2 = ttk.Label(self, text="Archivo 2 (SAT): Ninguno", background="#1c2c47", foreground="#f5f6fa", font=('Segoe UI', 10))
+        self.lbl_file2 = ttk.Label(self, text="Archivo 2 (SAT): Ninguno", style='TLabel')
         self.lbl_file2.pack(pady=(5, 20))
 
+        # --- Funciones de Botones (sin cambios en la lógica) ---
         def subir_archivo1():
             file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
             if file_path:
                 self.file1 = file_path
-                self.lbl_file1.config(text=f"Archivo 1 (Odoo): {file_path}")
-
+                self.lbl_file1.config(text=f"Archivo 1 (Odoo): {os.path.basename(file_path)}") # Mostrar solo el nombre del archivo
+        
         def subir_archivo2():
             file_path = filedialog.askopenfilename(filetypes=[("Excel files", "*.xlsx;*.xls")])
             if file_path:
                 self.file2 = file_path
-                self.lbl_file2.config(text=f"Archivo 2 (SAT): {file_path}")
+                self.lbl_file2.config(text=f"Archivo 2 (SAT): {os.path.basename(file_path)}") # Mostrar solo el nombre del archivo
 
         def procesar_excel():
             if not self.file1 or not self.file2:
@@ -55,22 +125,29 @@ class App(tk.Tk):
                 messagebox.showerror("Error", f"Ocurrió un error: {e}")
 
         def abrir_archivo():
-            if hasattr(self, 'archivo_procesado') and self.archivo_procesado:
-                import os
-                os.startfile(self.archivo_procesado)
+            if hasattr(self, 'archivo_procesado') and self.archivo_procesado and os.path.exists(self.archivo_procesado):
+                try:
+                    os.startfile(self.archivo_procesado)
+                except Exception as e:
+                    messagebox.showerror("Error", f"No se pudo abrir el archivo: {e}")
             else:
                 messagebox.showwarning("Advertencia", "Primero procesa y guarda un archivo.")
 
-        btn_subir1 = ttk.Button(btn_frame, text="Subir archivo 1 (odoo)", style="Blue.TButton", command=subir_archivo1)
+        # --- Creación de Botones con los nuevos estilos ---
+        btn_subir1 = ttk.Button(btn_frame, text="Subir archivo 1 (Odoo)", style="Upload.TButton", command=subir_archivo1)
         btn_subir1.pack(side=tk.LEFT, padx=10)
-        btn_subir2 = ttk.Button(btn_frame, text="Subir archivo 2 (sat)", style="Blue.TButton", command=subir_archivo2)
+        
+        btn_subir2 = ttk.Button(btn_frame, text="Subir archivo 2 (SAT)", style="Upload.TButton", command=subir_archivo2)
         btn_subir2.pack(side=tk.LEFT, padx=10)
-        btn_procesar = ttk.Button(btn_frame, text="Comparar", style="Yellow.TButton", command=procesar_excel)
+        
+        btn_procesar = ttk.Button(btn_frame, text="Comparar", style="Compare.TButton", command=procesar_excel)
         btn_procesar.pack(side=tk.LEFT, padx=10)
-        btn_abrir = ttk.Button(btn_frame, text="Abrir resultado", style="Green.TButton", command=abrir_archivo)
+        
+        btn_abrir = ttk.Button(btn_frame, text="Abrir resultado", style="Open.TButton", command=abrir_archivo)
         btn_abrir.pack(side=tk.LEFT, padx=10)
 
-# Función dummy para convertir_excel (debes reemplazarla por tu lógica real)
+# --- Las funciones de procesamiento de datos (sin cambios importantes, solo la importación de os) ---
+
 def convertir_excel(archivo_entrada, archivo_salida, tipo):
     # Aquí va la lógica real de conversión
     # Por ahora solo copia el archivo de entrada al de salida
@@ -206,7 +283,7 @@ def comparar_facturas(archivo_odoo, archivo_sat, archivo_salida):
     df_res = pd.DataFrame(resultados)
     df_res['sort_cancelado'] = df_res['ESTADO CANCELADO'].map({'FALSE': 0, 'TRUE': 1, '': 2})
     df_res['sort_estado'] = df_res['ESTADO DE COMPARACION'].map({'NO ENCONTRADO EN SAT': 0, 'SOLO EN SAT': 1, 'COINCIDEN': 2})
-    df_res = df_res.sort_values(by=['sort_cancelado', 'sort_estado', 'FACTURA ODOO', 'FACTURA SAT'], na_position='last').drop(columns=['sort_cancelado','sort_estado'])
+    df_res = df_res.sort_values(by=[ 'sort_estado', 'sort_cancelado', 'FACTURA ODOO', 'FACTURA SAT'], na_position='last').drop(columns=['sort_cancelado','sort_estado'])
     df_res.reset_index(drop=True, inplace=True)
 
     # Guardar Excel y aplicar colores según reglas:
