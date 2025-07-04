@@ -1,0 +1,23 @@
+✅ Cómo descargar facturas + notas de crédito (vista lista)
+Opción 1 – Exportar desde la vista lista
+Ve a:
+
+
+Contabilidad → Clientes → Facturas
+Borra cualquier filtro predefinido (p. ej. “Facturas de clientes”) para ver todos los documentos.
+
+O crea un filtro:
+
+Campo: Tipo
+
+Operador: está en
+
+Valor: Factura de cliente, Nota de crédito de cliente
+
+Marca las facturas y notas de crédito que quieres exportar (o usa “Seleccionar todo”).
+
+Haz clic en:
+
+Copiar
+Editar
+Acción → Exportar
